@@ -15,6 +15,11 @@ type ShortenerService struct {
 	counts map[string]int
 }
 
+type DomainStat struct {
+	Domain string
+	Count  int
+}
+
 func NewShortenerService() *ShortenerService {
 	return &ShortenerService{
 		store:  storage.NewMemoryStore(),
@@ -32,7 +37,9 @@ func (s *ShortenerService) Shorten(url string) string {
 
 	id := s.store.Save(url)
 	domain := utils.ExtractDomain(url)
-	s.counts[domain]++
+	if domain != "" {
+		s.counts[domain]++
+	}
 
 	return fmt.Sprintf("http://localhost:8080/%s", id)
 }
@@ -41,7 +48,7 @@ func (s *ShortenerService) Resolve(id string) string {
 	return s.store.GetURL(id)
 }
 
-func (s *ShortenerService) TopDomains(n int) map[string]int {
+func (s *ShortenerService) TopDomains(n int) []DomainStat {
 	type kv struct {
 		Key   string
 		Value int
@@ -56,9 +63,9 @@ func (s *ShortenerService) TopDomains(n int) map[string]int {
 		return ss[i].Value > ss[j].Value
 	})
 
-	result := make(map[string]int)
+	var result []DomainStat
 	for i := 0; i < n && i < len(ss); i++ {
-		result[ss[i].Key] = ss[i].Value
+		result = append(result, DomainStat{Domain: ss[i].Key, Count: ss[i].Value})
 	}
 
 	return result
