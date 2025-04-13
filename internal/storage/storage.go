@@ -43,3 +43,9 @@ func (s *MemoryStore) GetID(url string) (string, bool) {
 	id, exists := s.urlToID[url]
 	return id, exists
 }
+
+func (s *MemoryStore) GetURL(id string) string {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.idToURL[id]
+}

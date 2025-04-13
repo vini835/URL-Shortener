@@ -3,6 +3,7 @@ package service
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"url-shortener/internal/storage"
 	"url-shortener/internal/utils"
@@ -34,4 +35,31 @@ func (s *ShortenerService) Shorten(url string) string {
 	s.counts[domain]++
 
 	return fmt.Sprintf("http://localhost:8080/%s", id)
+}
+
+func (s *ShortenerService) Resolve(id string) string {
+	return s.store.GetURL(id)
+}
+
+func (s *ShortenerService) TopDomains(n int) map[string]int {
+	type kv struct {
+		Key   string
+		Value int
+	}
+
+	var ss []kv
+	for k, v := range s.counts {
+		ss = append(ss, kv{k, v})
+	}
+
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Value > ss[j].Value
+	})
+
+	result := make(map[string]int)
+	for i := 0; i < n && i < len(ss); i++ {
+		result[ss[i].Key] = ss[i].Value
+	}
+
+	return result
 }
